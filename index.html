@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>직선 운동 다중 섬광 사진</title>
+  <style>
+    :root {
+      --bg: #f7f8fb;
+      --panel: #ffffff;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --line: #d1d5db;
+      --red: #ef1d24;
+      --blue: #aee8ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    .wrap {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding: 18px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(20px, 3vw, 32px);
+      letter-spacing: -0.03em;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 15px;
+    }
+
+    .controls {
+      background: var(--panel);
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 12px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #111827;
+      color: white;
+    }
+
+    button.secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    input[type="range"] {
+      width: 140px;
+    }
+
+    select {
+      appearance: none;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      padding: 9px 34px 9px 12px;
+      background:
+        linear-gradient(45deg, transparent 50%, #6b7280 50%) right 14px center / 7px 7px no-repeat,
+        linear-gradient(135deg, #6b7280 50%, transparent 50%) right 9px center / 7px 7px no-repeat,
+        #ffffff;
+      color: #111827;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .hidden-control {
+      display: none;
+    }
+
+    .scene {
+      position: relative;
+      flex: 1;
+      min-height: 520px;
+      background:
+        linear-gradient(#ffffff, #f2f5f9 62%, #e9edf3 62%, #e9edf3),
+        repeating-linear-gradient(90deg, rgba(17,24,39,0.05) 0 1px, transparent 1px 80px);
+      border: 1px solid #e5e7eb;
+      border-radius: 22px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    .road {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 76px;
+      height: 7px;
+      background: #cbd5e1;
+    }
+
+    .distance-line {
+      position: absolute;
+      left: 5%;
+      right: 5%;
+      bottom: 44px;
+      height: 1px;
+      background: #9ca3af;
+    }
+
+    .tick {
+      position: absolute;
+      bottom: 37px;
+      width: 1px;
+      height: 14px;
+      background: #9ca3af;
+    }
+
+    .tick span {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      color: #6b7280;
+    }
+
+    .ghost-layer,
+    .car-layer,
+    .marker-layer {
+      position: absolute;
+      inset: 0;
+    }
+
+    .ghost {
+      position: absolute;
+      width: 108px;
+      height: 58px;
+      transform: translate(-50%, -50%) scaleX(-1);
+      transform-origin: center center;
+      filter: grayscale(1);
+      opacity: 0.28;
+    }
+
+    .ghost.old {
+      opacity: 0.1;
+    }
+
+    .ghost.mid {
+      opacity: 0.18;
+    }
+
+    .car {
+      position: absolute;
+      width: 118px;
+      height: 64px;
+      transform: translate(-50%, -50%) scaleX(-1);
+      transform-origin: center center;
+      filter: drop-shadow(0 8px 8px rgba(0,0,0,0.14));
+    }
+
+    .marker {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      font-size: 12px;
+      color: #374151;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .marker::before {
+      content: "";
+      display: block;
+      width: 8px;
+      height: 8px;
+      margin: 0 auto 4px;
+      border-radius: 999px;
+      background: #111827;
+    }
+
+    .formula {
+      position: absolute;
+      left: 20px;
+      top: 20px;
+      background: rgba(255,255,255,0.88);
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 12px 14px;
+      font-size: 15px;
+      line-height: 1.6;
+      box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+    }
+
+    .formula strong {
+      color: #dc2626;
+    }
+
+    .info {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      background: rgba(255,255,255,0.88);
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 12px 14px;
+      font-size: 14px;
+      line-height: 1.7;
+      box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+    }
+
+    .arrow {
+      position: absolute;
+      left: 50%;
+      top: 135px;
+      width: 220px;
+      height: 28px;
+      transform: translateX(-50%);
+      color: #dc2626;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .arrow-line {
+      position: absolute;
+      left: 0;
+      right: 20px;
+      top: 16px;
+      height: 4px;
+      background: #dc2626;
+      border-radius: 99px;
+    }
+
+    .arrow-head {
+      position: absolute;
+      right: 0;
+      top: 7px;
+      width: 0;
+      height: 0;
+      border-top: 10px solid transparent;
+      border-bottom: 10px solid transparent;
+      border-left: 22px solid #dc2626;
+    }
+
+    .arrow span {
+      position: absolute;
+      left: 50%;
+      top: -12px;
+      transform: translateX(-50%);
+      white-space: nowrap;
+    }
+
+    .explain {
+      background: var(--panel);
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 12px 14px;
+      color: #374151;
+      line-height: 1.6;
+      font-size: 15px;
+    }
+
+    @media (max-width: 720px) {
+      .scene {
+        min-height: 460px;
+      }
+
+      .formula,
+      .info {
+        position: static;
+        margin: 12px;
+        display: inline-block;
+      }
+
+      .arrow {
+        top: 190px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>직선 운동 다중 섬광 사진</h1>
+        <p class="subtitle">같은 시간 간격으로 찍힌 자동차의 위치 변화를 통해 속력 변화의 차이를 관찰합니다.</p>
+      </div>
+
+      <div class="controls">
+        <button id="playBtn">일시정지</button>
+        <button id="resetBtn" class="secondary">처음으로</button>
+        <label>운동 형태
+          <select id="motionType">
+            <option value="constant">속력 일정</option>
+            <option value="accelerate" selected>속력이 일정하게 증가</option>
+          </select>
+        </label>
+        <label id="speedControl">속력
+          <input id="speed" type="range" min="80" max="260" step="10" value="165" />
+          <span id="speedVal">165</span>
+        </label>
+        <label id="accelControl">가속도
+          <input id="accel" type="range" min="30" max="130" step="10" value="72" />
+          <span id="accelVal">72</span>
+        </label>
+        <label>섬광 간격
+          <input id="flash" type="range" min="0.25" max="0.9" step="0.05" value="0.45" />
+          <span id="flashVal">0.45초</span>
+        </label>
+      </div>
+    </header>
+
+    <main class="scene" id="scene">
+      <div class="formula">
+        <div><strong id="formulaTitle">속력이 일정하게 증가</strong></div>
+        <div id="formulaV">v = v₀ + at</div>
+        <div id="formulaS">s = v₀t + ½at²</div>
+      </div>
+
+      <div class="info" id="info">
+        시간: 0.00 s<br />
+        속도: 0.00 px/s<br />
+        위치: 0.00 px
+      </div>
+
+      <div class="arrow">
+        <span>운동 방향</span>
+        <div class="arrow-line"></div>
+        <div class="arrow-head"></div>
+      </div>
+
+      <div class="ghost-layer" id="ghostLayer"></div>
+      <div class="marker-layer" id="markerLayer"></div>
+      <div class="car-layer">
+        <div class="car" id="car"></div>
+      </div>
+      <div class="road"></div>
+      <div class="distance-line"></div>
+    </main>
+
+    <section class="explain">
+      <strong>관찰 포인트:</strong> 다중 섬광 사진은 같은 시간 간격으로 물체의 위치를 기록한 사진입니다. 이 시뮬레이션에서는 자동차의 중심 위치를 기준으로 점을 찍습니다. 속력이 일정하면 흔적 사이 간격이 일정하고, 속력이 일정하게 증가하면 간격이 점점 넓어집니다.
+    </section>
+  </div>
+
+  <template id="carSvgTemplate">
+    <svg
+      viewBox="0 120 512 270"
+      width="100%"
+      height="100%"
+      aria-hidden="true"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M494.934,227.26h-35.293l-97.828-87.586H222.961L111.48,227.26l-91.887,17.954
+           C8.33,246.648,0,256.205,0,267.469v69.017h60.697l0.502,0.002v-0.002h0.24
+           c0-34.884,28.264-63.146,63.146-63.146c34.887,0,63.148,28.262,63.148,63.146h152.102
+           l1.258,0.002v-0.002h0.24c0-34.884,28.264-63.146,63.146-63.146c34.885,0,63.146,28.262,63.146,63.146H512v-92.16
+           C512,234.906,504.356,227.26,494.934,227.26z
+           M158.818,227.076l73.631-57.842h88.1l0.305,0.001v58.026h-91.639L158.818,227.076z
+           M348.16,169.233h3.211l44.576,39.936v18.09H348.16V169.233z"
+        fill="#e53935"
+      />
+
+      <path
+        d="M124.586,300.647c-19.797,0-35.84,16.111-35.84,35.84c0,19.798,16.043,35.84,35.84,35.84
+           c19.73,0,35.84-16.042,35.84-35.84C160.426,316.758,144.316,300.647,124.586,300.647z"
+        fill="#1f2937"
+      />
+      <circle cx="124.586" cy="336.487" r="10.5" fill="#cbd5e1" />
+
+      <path
+        d="M404.48,300.647c-19.797,0-35.84,16.111-35.84,35.84c0,19.798,16.043,35.84,35.84,35.84
+           c19.73,0,35.84-16.042,35.84-35.84C440.32,316.758,424.211,300.647,404.48,300.647z"
+        fill="#1f2937"
+      />
+      <circle cx="404.48" cy="336.487" r="10.5" fill="#cbd5e1" />
+    </svg>
+  </template>
+
+  <script>
+    const scene = document.getElementById('scene');
+    const car = document.getElementById('car');
+    const ghostLayer = document.getElementById('ghostLayer');
+    const markerLayer = document.getElementById('markerLayer');
+    const playBtn = document.getElementById('playBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const motionType = document.getElementById('motionType');
+    const speedControl = document.getElementById('speedControl');
+    const speedInput = document.getElementById('speed');
+    const speedVal = document.getElementById('speedVal');
+    const accelControl = document.getElementById('accelControl');
+    const accelInput = document.getElementById('accel');
+    const accelVal = document.getElementById('accelVal');
+    const flashInput = document.getElementById('flash');
+    const flashVal = document.getElementById('flashVal');
+    const info = document.getElementById('info');
+    const formulaTitle = document.getElementById('formulaTitle');
+    const formulaV = document.getElementById('formulaV');
+    const formulaS = document.getElementById('formulaS');
+    const carSvg = document.getElementById('carSvgTemplate').innerHTML;
+
+    car.innerHTML = carSvg;
+
+    let playing = true;
+    let startTime = performance.now();
+    let pausedAt = 0;
+    let lastFlashIndex = -1;
+    let flashes = [];
+
+    const minSpeed = 18;
+    const carYRatio = 0.67;
+
+    function addTicks() {
+      document.querySelectorAll('.tick').forEach(t => t.remove());
+      const width = scene.clientWidth;
+      for (let i = 0; i <= 10; i++) {
+        const tick = document.createElement('div');
+        tick.className = 'tick';
+        tick.style.left = `${5 + i * 9}%`;
+        tick.innerHTML = `<span>${i}</span>`;
+        scene.appendChild(tick);
+      }
+    }
+
+    function rulerZeroX() {
+      return scene.clientWidth * 0.05;
+    }
+
+    function maxTravel() {
+      return Math.max(260, scene.clientWidth * 0.9);
+    }
+
+    function getMotion(t) {
+      const selected = motionType.value;
+      const baseSpeed = Number(speedInput.value);
+      const accel = Number(accelInput.value);
+      let a = 0;
+      let s = baseSpeed * t;
+      let v = baseSpeed;
+
+      if (selected === 'accelerate') {
+        a = accel;
+        s = baseSpeed * t + 0.5 * a * t * t;
+        v = baseSpeed + a * t;
+      }
+
+      return { s, v, a };
+    }
+
+    function xFromS(s) {
+      return rulerZeroX() + s;
+    }
+
+    function yPos() {
+      return scene.clientHeight * carYRatio;
+    }
+
+    function reset() {
+      startTime = performance.now();
+      pausedAt = 0;
+      lastFlashIndex = 0;
+      flashes = [];
+      ghostLayer.innerHTML = '';
+      markerLayer.innerHTML = '';
+      playing = true;
+      playBtn.textContent = '일시정지';
+      updateMotionGuide();
+      placeCarAtStart();
+      createGhost(xFromS(0), yPos(), 0, 0);
+    }
+
+    function placeCarAtStart() {
+      const centerX = xFromS(0);
+      car.style.left = `${centerX}px`;
+      car.style.top = `${yPos()}px`;
+      info.innerHTML = `운동 형태: ${motionType.options[motionType.selectedIndex].text}<br />시간: 0.00 s<br />속력: ${getMotion(0).v.toFixed(1)} px/s<br />위치: 0.0 px`;
+    }
+
+    function updateMotionGuide() {
+      const selected = motionType.value;
+      speedControl.classList.toggle('hidden-control', selected !== 'constant');
+      accelControl.classList.toggle('hidden-control', selected === 'constant');
+      if (selected === 'constant') {
+        formulaTitle.textContent = '속력 일정';
+        formulaV.textContent = 'v = 일정';
+        formulaS.textContent = 's = vt';
+      }
+      if (selected === 'accelerate') {
+        formulaTitle.textContent = '속력이 일정하게 증가';
+        formulaV.textContent = 'v = v₀ + at';
+        formulaS.textContent = 's = v₀t + ½at²';
+      }
+    }
+
+    function createGhost(centerX, y, index, t) {
+      const ghost = document.createElement('div');
+      ghost.className = 'ghost';
+      ghost.innerHTML = carSvg;
+      ghost.style.left = `${centerX}px`;
+      ghost.style.top = `${y}px`;
+
+      if (index < flashes.length - 5) ghost.classList.add('old');
+      else if (index < flashes.length - 2) ghost.classList.add('mid');
+
+      const marker = document.createElement('div');
+      marker.className = 'marker';
+      marker.style.left = `${centerX}px`;
+      marker.style.top = `${y + 56}px`;
+      marker.textContent = `${t.toFixed(2)}s`;
+
+      ghostLayer.appendChild(ghost);
+      markerLayer.appendChild(marker);
+      flashes.push({ ghost, marker });
+
+      while (flashes.length > 12) {
+        const old = flashes.shift();
+        old.ghost.remove();
+        old.marker.remove();
+      }
+    }
+
+    function recolorGhosts() {
+      const all = [...document.querySelectorAll('.ghost')];
+      all.forEach((g, i) => {
+        g.classList.remove('old', 'mid');
+        if (i < all.length - 6) g.classList.add('old');
+        else if (i < all.length - 3) g.classList.add('mid');
+      });
+    }
+
+    function animate(now) {
+      if (playing) {
+        const t = (now - startTime) / 1000;
+        const { s, v } = getMotion(t);
+        const maxS = maxTravel();
+        const loopedS = s % maxS;
+        const centerX = xFromS(loopedS);
+        const y = yPos();
+
+        car.style.left = `${centerX}px`;
+        car.style.top = `${y}px`;
+
+        info.innerHTML = `운동 형태: ${motionType.options[motionType.selectedIndex].text}<br />시간: ${t.toFixed(2)} s<br />속력: ${v.toFixed(1)} px/s<br />위치: ${loopedS.toFixed(1)} px`;
+
+        const flashInterval = Number(flashInput.value);
+        const flashIndex = Math.floor(t / flashInterval);
+
+        if (flashIndex !== lastFlashIndex) {
+          lastFlashIndex = flashIndex;
+          createGhost(centerX, y, flashIndex, t);
+          recolorGhosts();
+        }
+
+        if (s >= maxS) {
+          startTime = now;
+          lastFlashIndex = 0;
+          flashes = [];
+          ghostLayer.innerHTML = '';
+          markerLayer.innerHTML = '';
+          placeCarAtStart();
+          createGhost(xFromS(0), yPos(), 0, 0);
+        }
+      }
+      requestAnimationFrame(animate);
+    }
+
+    playBtn.addEventListener('click', () => {
+      playing = !playing;
+      if (playing) {
+        startTime = performance.now() - pausedAt;
+        playBtn.textContent = '일시정지';
+      } else {
+        pausedAt = performance.now() - startTime;
+        playBtn.textContent = '재생';
+      }
+    });
+
+    resetBtn.addEventListener('click', reset);
+
+    motionType.addEventListener('change', reset);
+
+    speedInput.addEventListener('input', () => {
+      speedVal.textContent = speedInput.value;
+      reset();
+    });
+
+    accelInput.addEventListener('input', () => {
+      accelVal.textContent = accelInput.value;
+      reset();
+    });
+
+    flashInput.addEventListener('input', () => {
+      flashVal.textContent = `${Number(flashInput.value).toFixed(2)}초`;
+      reset();
+    });
+
+    window.addEventListener('resize', () => {
+      addTicks();
+      reset();
+    });
+
+    addTicks();
+    reset();
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>
