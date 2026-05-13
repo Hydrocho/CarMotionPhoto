@@ -326,8 +326,8 @@
         <button id="resetBtn" class="secondary">처음으로</button>
         <label>운동 형태
           <select id="motionType">
-            <option value="constant">속력 일정</option>
-            <option value="accelerate" selected>속력이 일정하게 증가</option>
+            <option value="constant" selected>속력 일정</option>
+            <option value="accelerate">속력이 일정하게 증가</option>
           </select>
         </label>
         <label id="speedControl">속력
@@ -347,9 +347,9 @@
 
     <main class="scene" id="scene">
       <div class="formula">
-        <div><strong id="formulaTitle">속력이 일정하게 증가</strong></div>
-        <div id="formulaV">v = v₀ + at</div>
-        <div id="formulaS">s = v₀t + ½at²</div>
+        <div><strong id="formulaTitle">속력 일정</strong></div>
+        <div id="formulaV">v = 일정</div>
+        <div id="formulaS">s = vt</div>
       </div>
 
       <div class="info" id="info">
